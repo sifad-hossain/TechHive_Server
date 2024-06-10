@@ -195,11 +195,16 @@ async function run() {
             res.send(result)
         })
 
-        app.post('/addedreview',  async (req, res) => {
+        app.post('/addedreview', async (req, res) => {
             const review = req.body
             const result = await reviewCollection.insertOne(review)
             res.send(result)
-          })
+        })
+
+        app.get('/addedreview', async (req, res) => {
+            const result = await reviewCollection.find().toArray()
+            res.send(result)
+        })
 
         // Send a ping to confirm a successful connection
         await client.db('admin').command({ ping: 1 })
