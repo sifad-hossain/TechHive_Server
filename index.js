@@ -27,7 +27,7 @@ async function run() {
     try {
         const userCollection = client.db("techHiveDB").collection("users")
         const productCollection = client.db("techHiveDB").collection("products")
-
+        const reviewCollection = client.db('techHiveDB').collection('review')
         //jwt related api
         app.post('/jwt', async (req, res) => {
             const user = req.body;
@@ -128,6 +128,23 @@ async function run() {
             res.send({ admin })
         })
 
+
+        /**Conceptual sessino task:  */
+
+        app.get('/user/:email', async (req, res) => {
+            const email = req.params.email;
+            const query = { email: email }
+            const result = await userCollection.findOne(query)
+            res.send(result)
+        })
+
+
+
+
+
+
+
+
         app.delete('/products/:id', async (req, res) => {
             const id = req.params.id;
             const query = { _id: new ObjectId(id) }
@@ -177,6 +194,13 @@ async function run() {
             const result = await productCollection.updateOne(query, updateDoc)
             res.send(result)
         })
+
+        app.post('/addedreview',  async (req, res) => {
+            const review = req.body
+            const result = await reviewCollection.insertOne(review)
+            res.send(result)
+          })
+
         // Send a ping to confirm a successful connection
         await client.db('admin').command({ ping: 1 })
         console.log(
