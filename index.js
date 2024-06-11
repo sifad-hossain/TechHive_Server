@@ -85,8 +85,8 @@ async function run() {
       const token = jwt.sign(user, process.env.ACCESS_TOKEN_SECRET, {
         expiresIn: '365d',
       })
-      res.send({token})
-      
+      res.send({ token })
+
     })
     // Logout
     app.get('/logout', async (req, res) => {
@@ -149,12 +149,12 @@ async function run() {
       res.send(result)
     })
 
-      //7. get all users data from db
-      app.get('/users',  async (req, res) => {
-        const result = await usersCollection.find().toArray()
-        res.send(result)
-      })
-  
+    //7. get all users data from db
+    app.get('/users', async (req, res) => {
+      const result = await usersCollection.find().toArray()
+      res.send(result)
+    })
+
 
     //6. get a user info by email from db
     app.get('/user/:email', async (req, res) => {
@@ -164,7 +164,7 @@ async function run() {
     })
 
 
-  
+
 
     //8.update a user role
     app.patch('/users/update/:email', async (req, res) => {
@@ -207,7 +207,18 @@ async function run() {
     })
 
 
-
+    // Update product status
+    app.patch('/product/status/:id', async (req, res) => {
+      const id = req.params.id
+      const status = req.body
+      console.log(status)
+      const query = { _id: new ObjectId(id) }
+      const updateDoc = {
+        $set: status,
+      }
+      const result = await productsCollection.updateOne(query, updateDoc)
+      res.send(result)
+    })
 
 
     app.delete('/products/:id', async (req, res) => {
