@@ -207,15 +207,18 @@ async function run() {
     })
 
 
-    // Update product status
-    app.patch('/tech/:id', async (req, res) => {
-      console.log('status hi');
-      const id = req.params.id
-      const query = { _id: new ObjectId(id) }
-      
-      const result = await productCollection.updateOne(query)
-      res.send(result)
-    })
+   // Update product status
+   app.patch('/tech/:id', async (req, res) => {
+    const id = req.params.id
+    const isApproved = req.body
+    console.log(isApproved)
+    const query = { _id: new ObjectId(id) }
+    const updateDoc = {
+      $set: isApproved,
+    }
+    const result = await productCollection.updateOne(query, updateDoc)
+    res.send(result)
+  })
 
 
     app.delete('/products/:id', async (req, res) => {
