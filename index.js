@@ -88,21 +88,21 @@ async function run() {
       res.send({ token })
 
     })
-    // Logout
-    app.get('/logout', async (req, res) => {
-      try {
-        res
-          .clearCookie('token', {
-            maxAge: 0,
-            secure: process.env.NODE_ENV === 'production',
-            sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'strict',
-          })
-          .send({ success: true })
-        console.log('Logout successful')
-      } catch (err) {
-        res.status(500).send(err)
-      }
-    })
+    // // Logout
+    // app.get('/logout', async (req, res) => {
+    //   try {
+    //     res
+    //       .clearCookie('token', {
+    //         maxAge: 0,
+    //         secure: process.env.NODE_ENV === 'production',
+    //         sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'strict',
+    //       })
+    //       .send({ success: true })
+    //     console.log('Logout successful')
+    //   } catch (err) {
+    //     res.status(500).send(err)
+    //   }
+    // })
 
 
     app.post('/users', async (req, res) => {
@@ -208,15 +208,12 @@ async function run() {
 
 
     // Update product status
-    app.patch('/product/status/:id', async (req, res) => {
+    app.patch('/tech/:id', async (req, res) => {
+      console.log('status hi');
       const id = req.params.id
-      const status = req.body
-      console.log(status)
       const query = { _id: new ObjectId(id) }
-      const updateDoc = {
-        $set: status,
-      }
-      const result = await productsCollection.updateOne(query, updateDoc)
+      
+      const result = await productCollection.updateOne(query)
       res.send(result)
     })
 
