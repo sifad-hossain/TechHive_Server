@@ -3,35 +3,37 @@ const app = express();
 const cors = require('cors')
 const jwt = require('jsonwebtoken')
 require('dotenv').config()
-const cookieParser = require('cookie-parser')
+// const cookieParser = require('cookie-parser')
 const port = process.env.PORT || 4000;
 
 
 // middleware
 const corsOptions = {
-  origin: ['http://localhost:5173', 'http://localhost:5174'],
+  origin: ['http://localhost:5173', 'http://localhost:5174', 'https://techhive-be21c.web.app'],
   credentials: true,
   optionSuccessStatus: 200,
 }
 app.use(cors(corsOptions))
 
 app.use(express.json())
-app.use(cookieParser())
+// app.use(cookieParser())
 
 // Verify Token Middleware
-const verifyToken = async (req, res, next) => {
-  const token = req.cookies?.token
-  console.log('her token', token)
-  if (!token) {
-    return res.status(401).send({ message: 'unauthorized access' })
+const verifyToken = (req, res, next) => {
+  // console.log('inside verify token', req.headers.authorization);
+  const receipeToken = req.headers.authorization
+  
+  if (!receipeToken) {
+    console.log(receipeToken);
+    return res.status(401).send({ message: 'unauthorized access' });
   }
+  const token = receipeToken.split(' ')[1];
   jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, (err, decoded) => {
     if (err) {
-      console.log('error', err)
-      return res.status(401).send({ message: 'unauthorized access' })
+      return res.status(401).send({ message: 'bad request' })
     }
-    req.user = decoded
-    next()
+    req.decoded = decoded;
+    next();
   })
 }
 
@@ -57,13 +59,13 @@ async function run() {
 
     //1. verify admin middleware
     const verifyAdmin = async (req, res, next) => {
-      console.log('hello')
-      const user = req.user
+      // console.log('hello')
+      const user = req.decoded
       const query = { email: user?.email }
       const result = await usersCollection.findOne(query)
-      console.log(result?.role)
+      // console.log(result?.role)
       if (!result || result?.role !== 'admin')
-        return res.status(401).send({ message: 'unauthorized access!!' })
+        return res.status(401).send({ message: 'for bidden access!!' })
 
       next()
     }
@@ -150,7 +152,7 @@ async function run() {
     })
 
     //7. get all users data from db
-    app.get('/users', async (req, res) => {
+    app.get('/users', verifyToken, verifyAdmin,  async (req, res) => {
       const result = await usersCollection.find().toArray()
       res.send(result)
     })
@@ -179,22 +181,6 @@ async function run() {
     })
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
     app.post('/products', async (req, res) => {
       const newProduct = req.body
       const result = await productCollection.insertOne(newProduct)
@@ -210,12 +196,13 @@ async function run() {
    // Update product status
    app.patch('/tech/:id', async (req, res) => {
     const id = req.params.id
-    const isApproved = req.body
-    console.log(isApproved)
+    const isFeatured = req.body
+    console.log(isFeatured)
     const query = { _id: new ObjectId(id) }
     const updateDoc = {
-      $set: isApproved,
+      $set : isFeatured,
     }
+    console.log('you donot cry bro', updateDoc);
     const result = await productCollection.updateOne(query, updateDoc)
     res.send(result)
   })
@@ -243,6 +230,20 @@ async function run() {
       res.send(result)
     })
 
+     //searching system include on need allProducts page
+     app.get('/products-searching', async (req, res) => {
+      const search = req.query.search
+      console.log("test", search);
+      let query = {
+        tag_input: { $regex: (search), $options: 'i' },
+      }
+
+      let options = {}
+      const result = await productCollection
+        .find(query, options)
+        .toArray()
+      res.send(result)
+    })
 
 
     // Update product vote
@@ -283,10 +284,10 @@ async function run() {
     })
 
     // Send a ping to confirm a successful connection
-    await client.db('admin').command({ ping: 1 })
-    console.log(
-      'Pinged your deployment. You successfully connected to MongoDB!'
-    )
+    // await client.db('admin').command({ ping: 1 })
+    // console.log(
+    //   'Pinged your deployment. You successfully connected to MongoDB!'
+    // )
   } finally {
     // Ensures that the client will close when you finish/error
     // await client.close();
