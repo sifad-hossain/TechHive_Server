@@ -22,13 +22,14 @@ app.use(express.json())
 const verifyToken = (req, res, next) => {
   // console.log('inside verify token', req.headers.authorization);
   const receipeToken = req.headers.authorization
-  
+
   if (!receipeToken) {
-    console.log(receipeToken);
+    console.log({ receipeToken });
     return res.status(401).send({ message: 'unauthorized access' });
   }
   const token = receipeToken.split(' ')[1];
   jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, (err, decoded) => {
+    console.log({ err });
     if (err) {
       return res.status(401).send({ message: 'bad request' })
     }
@@ -36,6 +37,9 @@ const verifyToken = (req, res, next) => {
     next();
   })
 }
+
+
+
 
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.dh7dofl.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0`;
@@ -55,9 +59,6 @@ async function run() {
     const productCollection = client.db("techHiveDB").collection("products")
     const reviewCollection = client.db('techHiveDB').collection('review')
 
-
-
-    //1. verify admin middleware
     const verifyAdmin = async (req, res, next) => {
       // console.log('hello')
       const user = req.decoded
@@ -80,6 +81,9 @@ async function run() {
         return res.status(401).send({ message: 'unauthorized access' })
       next()
     }
+
+    //1. verify admin middleware
+
 
     //3. auth related api
     app.post('/jwt', async (req, res) => {
@@ -152,11 +156,10 @@ async function run() {
     })
 
     //7. get all users data from db
-    app.get('/users', verifyToken, verifyAdmin,  async (req, res) => {
+    app.get('/users', verifyToken, verifyAdmin, async (req, res) => {
       const result = await usersCollection.find().toArray()
       res.send(result)
     })
-
 
     //6. get a user info by email from db
     app.get('/user/:email', async (req, res) => {
@@ -164,9 +167,6 @@ async function run() {
       const result = await usersCollection.findOne({ email })
       res.send(result)
     })
-
-
-
 
     //8.update a user role
     app.patch('/users/update/:email', async (req, res) => {
@@ -193,19 +193,19 @@ async function run() {
     })
 
 
-   // Update product status
-   app.patch('/tech/:id', async (req, res) => {
-    const id = req.params.id
-    const isFeatured = req.body
-    console.log(isFeatured)
-    const query = { _id: new ObjectId(id) }
-    const updateDoc = {
-      $set : isFeatured,
-    }
-    console.log('you donot cry bro', updateDoc);
-    const result = await productCollection.updateOne(query, updateDoc)
-    res.send(result)
-  })
+    // Update product status
+    app.patch('/tech/:id', async (req, res) => {
+      const id = req.params.id
+      const isFeatured = req.body
+      console.log(isFeatured)
+      const query = { _id: new ObjectId(id) }
+      const updateDoc = {
+        $set: isFeatured,
+      }
+      console.log('you donot cry bro', updateDoc);
+      const result = await productCollection.updateOne(query, updateDoc)
+      res.send(result)
+    })
 
 
     app.delete('/products/:id', async (req, res) => {
@@ -221,6 +221,34 @@ async function run() {
       res.send(result)
     })
 
+
+
+
+
+
+
+
+
+
+    app.patch('/productsUpdated/:id', async (req, res) => {
+      const item = req.body;
+      const id = req.params.id;
+      const filter = { _id: id }
+      const updatedDoc = {
+        $set: {
+          //Todo
+        }
+      }
+      const result = await productCollection.updateOne(filter, updatedDoc)
+      res.send(result)
+    })
+
+
+
+
+
+
+
     app.get('/products/:email', async (req, res) => {
 
       const email = req.params.email
@@ -230,8 +258,8 @@ async function run() {
       res.send(result)
     })
 
-     //searching system include on need allProducts page
-     app.get('/products-searching', async (req, res) => {
+    //searching system include on need allProducts page
+    app.get('/products-searching', async (req, res) => {
       const search = req.query.search
       console.log("test", search);
       let query = {
@@ -278,10 +306,12 @@ async function run() {
       res.send(result)
     })
 
-    app.get('/addedreview', async (req, res) => {
-      const result = await reviewCollection.find().toArray()
-      res.send(result)
-    })
+   app.get('addedreview', async(req, res) => {
+    console.log("hi I am review");
+    const result = await productCollection.find.toArray()
+    res.send(result)
+   })
+   
 
     // Send a ping to confirm a successful connection
     // await client.db('admin').command({ ping: 1 })
@@ -301,6 +331,6 @@ app.get('/', (req, res) => {
   res.send('techHive your new distgnation')
 })
 
-app.listen(port, (req, res) => {
+app.listen(port, () => {
   console.log(`TechHive your server side, ${port}`);
 })
